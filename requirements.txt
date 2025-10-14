@@ -1,0 +1,6 @@
+autogen
+autogen-agentchat[cerebras]
+cerebras-cloud-sdk
+python-dotenv
+google-api-python-client
+requests
