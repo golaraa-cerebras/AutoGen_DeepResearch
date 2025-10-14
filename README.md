@@ -26,7 +26,7 @@ The DataAnalystAgent can create various types of plots:
 
 ## Workflow
 
-![Agent Workflow](agent_workflow.png)
+![Agent Workflow](agentic_workflow.png)
 
 *Placeholder for workflow diagram - to be added later*
 
