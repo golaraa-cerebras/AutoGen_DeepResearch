@@ -82,8 +82,8 @@ async def main():
     
     tasks = [
     """Research recent articles on battery recycling advances and summarize key points from the top 5 results.""",
-    """Based on the search results, analyze the current trends and challenges in battery recycling.""",
-    """Create a bar chart showing the market share of different battery types (Lithium-ion: 70%, Nickel-metal hydride: 15%, Lead-acid: 10%, Other: 5%) and save it as 'battery_market_share.png'.""",
+    """Based on the search results, analyze the current trends and challenges in battery recycling,  market share of different battery types. You will need this for visualization.""",
+    """Create a bar chart showing the market share of different battery types and save it as 'battery_market_share.png'.""",
     ]
     
     res = await orchestrator_agent.a_initiate_chats(  
