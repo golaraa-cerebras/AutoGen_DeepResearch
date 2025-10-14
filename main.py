@@ -11,7 +11,7 @@ def is_termination_msg(x):
     content = x.get("content", "")
     return content and content.rstrip().endswith("TERMINATE")
 
-orchestrator_agent = ConversableAgent(
+orchestrator_agent = UserProxyAgent(
     name="Orchestrator",
     system_message=ORCHESTRATOR_SYSTEM_MSG,
     human_input_mode="NEVER",
