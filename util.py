@@ -1,7 +1,10 @@
 import os
 import json
 import requests
-
+import matplotlib.pyplot as plt
+import numpy as np
+from typing import List
+from typing_extensions import Annotated
 def _call_google_search_api(query: str, num_results: int = 5) -> dict:
     """
     Perform a Google Custom Search and return structured results.
@@ -71,3 +74,47 @@ def _call_tavily_search_api(query: str, num_results: int = 5) -> dict:
         ],
     }
 
+
+def create_plot(
+    data: Annotated[dict, "Data to plot"],
+    plot_type: Annotated[str, "Type of plot to create (bar, line, scatter, pie)"],
+    title: Annotated[str, "Title of the plot"] = "Data Visualization",
+    xlabel: Annotated[str, "Label for x-axis"] = "X-axis",
+    ylabel: Annotated[str, "Label for y-axis"] = "Y-axis",
+    filename: Annotated[str, "Filename to save the plot"] = "plot.png"
+) -> str:
+    """
+    Create a plot based on the provided data and save it to a file.
+    Returns the filename of the saved plot.
+    """
+    # Extract data
+    x_data = data.get("x", [])
+    y_data = data.get("y", [])
+    
+    # Create figure
+    plt.figure(figsize=(10, 6))
+    
+    # Create plot based on type
+    if plot_type == "bar":
+        plt.bar(x_data, y_data)
+    elif plot_type == "line":
+        plt.plot(x_data, y_data)
+    elif plot_type == "scatter":
+        plt.scatter(x_data, y_data)
+    elif plot_type == "pie":
+        plt.pie(y_data, labels=x_data, autopct='%1.1f%%')
+        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+    else:
+        raise ValueError(f"Unsupported plot type: {plot_type}")
+    
+    # Add labels and title
+    if plot_type != "pie":  # Pie charts don't typically have axis labels
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+    plt.title(title)
+    
+    # Save plot
+    plt.savefig(filename)
+    plt.close()  # Close the figure to free memory
+    
+    return filename

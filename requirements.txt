@@ -4,3 +4,4 @@ cerebras-cloud-sdk
 python-dotenv
 google-api-python-client
 requests
+matplotlib
