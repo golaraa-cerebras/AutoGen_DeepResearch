@@ -11,10 +11,10 @@ This project demonstrates a multi-agent research system using AutoGen with Cereb
 
 ## Agents
 
-1. **Orchestrator**: Manages the team of expert agents and coordinates their efforts
+1. **Orchestrator**: Manages the team of expert agents and coordinates their efforts. Executes tools if necessary
 2. **SearchAgent**: Performs web searches using the Tavily API
 3. **AnalystAgent**: Analyzes and synthesizes information from search results
-4. **DataAnalystAgent**: Analyzes data and creates visualizations using matplotlib
+4. **DataAnalystAgent**: Creating a report based on the analysis data, along with visualizations
 
 ## Data Visualization
 
@@ -41,6 +41,7 @@ The DataAnalystAgent can create various types of plots:
    - `TAVILY_API_KEY`: Your Tavily API key (for web search)
 
 ## Usage
+Modify the tasks requested by the user (search topic, and analysis required).
 
 Run the main script:
 ```
