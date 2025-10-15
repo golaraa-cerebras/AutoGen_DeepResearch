@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import List
 from typing_extensions import Annotated
+from fpdf import FPDF
 def _call_google_search_api(query: str, num_results: int = 5) -> dict:
     """
     Perform a Google Custom Search and return structured results.
@@ -118,3 +119,63 @@ def create_plot(
     plt.close()  # Close the figure to free memory
     
     return filename
+
+
+def generate_pdf_report(
+    analyst_response: Annotated[str, "The response from the analyst agent"],
+    plot_filenames: Annotated[List[str], "List of filenames of plots to include in the report"] = [],
+    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf"
+) -> str:
+    """
+    Generate a PDF report that includes the analyst's response and any generated plots.
+    
+    Args:
+        analyst_response (str): The response text from the analyst agent
+        plot_filenames (List[str]): List of filenames of plots to include in the report
+        report_filename (str): Filename for the generated PDF report
+        
+    Returns:
+        str: The filename of the generated PDF report
+    """
+    # Clean the text to remove or replace unsupported Unicode characters
+    def clean_text(text):
+        # Replace non-breaking hyphen with regular hyphen
+        return text.replace("\u2011", "-")
+    
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    
+    # Use built-in fonts but clean the text to avoid Unicode issues
+    # Add title
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Research Analysis Report", ln=True, align="C")
+    pdf.ln(10)
+    
+    # Add analyst response
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, clean_text(analyst_response))
+    pdf.ln(10)
+    
+    # Add plots if any
+    for plot_filename in plot_filenames:
+        if os.path.exists(plot_filename):
+            # Add a title for the plot
+            pdf.set_font("Arial", "B", 14)
+            pdf.cell(0, 10, f"Plot: {plot_filename}", ln=True)
+            pdf.ln(5)
+            
+            # Add the plot image
+            pdf.set_font("Arial", "", 12)
+            try:
+                # Ensure the image fits on the page
+                pdf.image(plot_filename, w=180)
+                pdf.ln(10)
+            except Exception as e:
+                # If image cannot be added, add a note about it
+                pdf.cell(0, 10, f"Could not include image: {str(e)}", ln=True)
+                pdf.ln(10)
+    
+    # Save the PDF
+    pdf.output(report_filename)
+    return report_filename

@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 import json
 from config import *
 from autogen import AssistantAgent, ConversableAgent, UserProxyAgent
-from util import _call_tavily_search_api, create_plot
+from util import _call_tavily_search_api, create_plot, generate_pdf_report
 
 # Termination message function
 def is_termination_msg(x):
@@ -78,14 +78,29 @@ def plot_data(
     return create_plot(data, plot_type, title, xlabel, ylabel, filename)
 
 
+@orchestrator_agent.register_for_execution()
+@data_analyst_agent.register_for_llm(description="Generate a PDF report with analysis results and plots")
+def generate_pdf_report_tool(
+    analyst_response: Annotated[str, "The response from the analyst agent"],
+    plot_filenames: Annotated[List[str], "List of filenames of plots to include in the report"] = [],
+    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf"
+) -> str:
+    """
+    Function that generates a PDF report with the analyst's response and any generated plots.
+    Returns the filename of the generated PDF report.
+    """
+    return generate_pdf_report(analyst_response, plot_filenames, report_filename)
+
+
 async def main():
-    
+
     tasks = [
-    """Research recent articles on battery recycling advances and summarize key points from the top 5 results.""",
-    """Based on the search results, analyze the current trends and challenges in battery recycling,  market share of different battery types. You will need this for visualization.""",
-    """Create a bar chart showing the market share of different battery types and save it as 'battery_market_share.png'.""",
+"""Research recent articles on battery recycling advances and summarize key points from the top 5 results.""",
+"""Based on the search results, analyze the current trends and challenges in battery recycling, market share of different battery types.""",
+
     ]
     
+    # First, let's initiate the search and analysis
     res = await orchestrator_agent.a_initiate_chats(  
             [
                 {
@@ -107,12 +122,36 @@ async def main():
                     "chat_id": 3,
                     "prerequisites": [2],
                     "recipient": data_analyst_agent,
-                    "message": tasks[2],
+                    "message": f"Based on the following analysis from the analyst agent, if needed, create visualization(s) and save them as png files. Then write a report using the following analysis and include any available plots when appropriate.",
                     "silent": False,
                     "summary_method": "last_msg",
                 },
             ]
         )
+    
+    # # Get the analyst's response
+    # analyst_response = res[1].summary if len(res) > 1 else "No analysis available"
+    
+    # # Now initiate the visualization and report generation with the analyst's response
+    # res2 = await orchestrator_agent.a_initiate_chats(  
+    #         [
+    #             {
+    #                 "chat_id": 3,
+    #                 "recipient": data_analyst_agent,
+    #                 "message": f"Based on the following analysis from the analyst agent, if needed, create visualization(s) and save them as png files. Then write a report using the following analysis and include any available plots when appropriate:\n\nAnalysis:\n{analyst_response}",
+    #                 "silent": False,
+    #                 "summary_method": "last_msg",
+    #             },
+    #             # {
+    #             #     "chat_id": 4,
+    #             #     "prerequisites": [3],
+    #             #     "recipient": data_analyst_agent,
+    #             #     "message": f"Based on the analysis provided by the analyst agent and the market share visualization you created, generate a comprehensive PDF report and save it as 'battery_recycling_analysis.pdf'.\n\nAnalysis:\n{analyst_response}",
+    #             #     "silent": False,
+    #             #     "summary_method": "last_msg",
+    #             # },
+    #         ]
+    #     )
 
 if __name__ == "__main__":
     asyncio.run(main())
