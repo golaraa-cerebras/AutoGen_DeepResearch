@@ -123,7 +123,7 @@ async def main():
                     "chat_id": 3,
                     "prerequisites": [2],
                     "recipient": data_analyst_agent,
-                    "message": f"Based on the following analysis from the analyst agent, if needed, create visualization(s) and save them as png files. Then write a report using the following analysis and include any available plots when appropriate.",
+                    "message": f"Based on the following analysis from the analyst agent, if needed, create visualization(s) and save them as png files. Then write a report using the given analysis and include any available plots when appropriate.",
                     "silent": False,
                     "summary_method": "last_msg",
                 },

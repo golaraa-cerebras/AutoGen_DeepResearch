@@ -235,7 +235,7 @@ def generate_pdf_report(
         pdf.add_section_title("Data Visualizations")
         
         for i, plot_filename in enumerate(plot_filenames, 1):
-            
+            print(plot_filename)
             # Add a title for the plot
             # Extract just the filename without extension for the title
             plot_name = os.path.basename(plot_filename).replace('.png', '').replace('_', ' ').title()
@@ -243,13 +243,21 @@ def generate_pdf_report(
             
             # Check if file exists and add the plot image
             try:
+                # First check if the file exists at the given path
                 if os.path.exists(plot_filename):
                     # Ensure the image fits on the page with proper margins
                     pdf.image(plot_filename, w=160, h=90, type='PNG')
                 else:
-                    # If image file doesn't exist, add a note about it
-                    pdf.set_font('Times', 'I', 10)
-                    pdf.cell(0, 10, f"Could not include image: File '{plot_filename}' not found", border=0, ln=1, align='L')
+                    # If not found, check if it exists in the plots directory
+                    plots_dir = "plots"
+                    plot_path = os.path.join(plots_dir, plot_filename)
+                    if os.path.exists(plot_path):
+                        # Ensure the image fits on the page with proper margins
+                        pdf.image(plot_path, w=160, h=90, type='PNG')
+                    else:
+                        # If image file doesn't exist in either location, add a note about it
+                        pdf.set_font('Times', 'I', 10)
+                        pdf.cell(0, 10, f"Could not include image: File '{plot_filename}' not found", border=0, ln=1, align='L')
             except Exception as e:
                 # If image cannot be added for any other reason, add a note about it
                 pdf.set_font('Times', 'I', 10)
