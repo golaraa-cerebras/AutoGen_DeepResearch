@@ -85,9 +85,16 @@ def create_plot(
     filename: Annotated[str, "Filename to save the plot"] = "plot.png"
 ) -> str:
     """
-    Create a plot based on the provided data and save it to a file.
+    Create a plot based on the provided data and save it to a file in the plots folder.
     Returns the filename of the saved plot.
     """
+    import os
+    
+    # Create plots directory if it doesn't exist
+    plots_dir = "plots"
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+    
     # Extract data
     x_data = data.get("x", [])
     y_data = data.get("y", [])
@@ -114,67 +121,141 @@ def create_plot(
         plt.ylabel(ylabel)
     plt.title(title)
     
-    # Save plot
-    plt.savefig(filename)
+    # Save plot in plots folder
+    filepath = os.path.join(plots_dir, filename)
+    plt.savefig(filepath)
     plt.close()  # Close the figure to free memory
     
-    return filename
+    return filepath
 
 
 def generate_pdf_report(
     analyst_response: Annotated[str, "The response from the analyst agent"],
     plot_filenames: Annotated[List[str], "List of filenames of plots to include in the report"] = [],
-    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf"
+    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf",
+    report_title: Annotated[str, "Title for the PDF report"] = "Analysis Report"
 ) -> str:
     """
-    Generate a PDF report that includes the analyst's response and any generated plots.
+    Generate a professional PDF report that includes the analyst's response and any generated plots.
     
     Args:
         analyst_response (str): The response text from the analyst agent
         plot_filenames (List[str]): List of filenames of plots to include in the report
         report_filename (str): Filename for the generated PDF report
+        report_title (str): Title for the PDF report
         
     Returns:
         str: The filename of the generated PDF report
     """
-    # Clean the text to remove or replace unsupported Unicode characters
+    
+    # Clean text to handle Unicode characters properly
     def clean_text(text):
+        if not text:
+            return ""
         # Replace non-breaking hyphen with regular hyphen
         return text.replace("\u2011", "-")
     
-    pdf = FPDF(orientation='P', unit='mm', format='A4')
-    pdf.set_auto_page_break(auto=True, margin=15)
+    class PDF(FPDF):
+        def __init__(self, title):
+            super().__init__()
+            self.report_title = title
+            
+        def header(self):
+            # Set font for header
+            self.set_font('Times', 'B', 16)
+            # Add title
+            self.cell(0, 10, self.report_title, border=0, ln=1, align='C')
+            # Add line break
+            self.ln(8)
+            
+        def footer(self):
+            # Position at 1.5 cm from bottom
+            self.set_y(-15)
+            # Set font for footer
+            self.set_font('Times', 'I', 8)
+            # Add page number
+            self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', border=0, ln=0, align='C')
+            
+        def add_report_date(self):
+            # Add report date
+            from datetime import datetime
+            self.set_font('Times', 'I', 10)
+            self.cell(0, 10, f"Report generated on: {datetime.now().strftime('%B %d, %Y')}", border=0, ln=1, align='R')
+            self.ln(5)
+            
+        def add_section_title(self, title):
+            # Set font for section title
+            self.set_font('Times', 'B', 14)
+            # Add section title with underline
+            self.cell(0, 10, title, border=0, ln=1, align='L')
+            # Add line
+            self.set_draw_color(0, 0, 0)  # Black line
+            self.line(self.get_x(), self.get_y(), self.w - self.r_margin, self.get_y())
+            # Add line break
+            self.ln(8)
+            
+        def add_body_text(self, text):
+            # Set font for body text
+            self.set_font('Times', '', 12)
+            # Clean text to handle Unicode characters
+            cleaned_text = clean_text(text)
+            # Add body text
+            self.multi_cell(0, 8, cleaned_text)
+            # Add line break
+            self.ln(8)
+            
+        def add_plot_title(self, title):
+            # Set font for plot title
+            self.set_font('Times', 'B', 12)
+            # Add plot title
+            self.cell(0, 10, title, border=0, ln=1, align='C')
+            # Add line break
+            self.ln(5)
+
+    # Create PDF instance with UTF-8 support
+    pdf = PDF(report_title)
+    pdf.set_auto_page_break(auto=True, margin=25)
+    
+    # Set alias for total page numbers
+    pdf.alias_nb_pages()
+    
+    # Add first page
     pdf.add_page()
     
-    # Use built-in fonts but clean the text to avoid Unicode issues
-    # Add title
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "Research Analysis Report", ln=True, align="C")
-    pdf.ln(10)
+    # Add report date
+    pdf.add_report_date()
     
-    # Add analyst response
-    pdf.set_font("Arial", "", 12)
-    pdf.multi_cell(0, 10, clean_text(analyst_response))
-    pdf.ln(10)
+    # Add executive summary section
+    pdf.add_section_title("Executive Summary")
+    pdf.add_body_text(analyst_response)
     
-    # Add plots if any
-    for plot_filename in plot_filenames:
-        if os.path.exists(plot_filename):
-            # Add a title for the plot
-            pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, f"Plot: {plot_filename}", ln=True)
-            pdf.ln(5)
+    # Add data visualization section if plots exist
+    if plot_filenames:
+        pdf.add_page()  # Start plots on a new page
+        pdf.add_section_title("Data Visualizations")
+        
+        for i, plot_filename in enumerate(plot_filenames, 1):
             
-            # Add the plot image
-            pdf.set_font("Arial", "", 12)
+            # Add a title for the plot
+            # Extract just the filename without extension for the title
+            plot_name = os.path.basename(plot_filename).replace('.png', '').replace('_', ' ').title()
+            pdf.add_plot_title(f"Figure {i}: {plot_name}")
+            
+            # Check if file exists and add the plot image
             try:
-                # Ensure the image fits on the page
-                pdf.image(plot_filename, w=180)
-                pdf.ln(10)
+                if os.path.exists(plot_filename):
+                    # Ensure the image fits on the page with proper margins
+                    pdf.image(plot_filename, w=160, h=90, type='PNG')
+                else:
+                    # If image file doesn't exist, add a note about it
+                    pdf.set_font('Times', 'I', 10)
+                    pdf.cell(0, 10, f"Could not include image: File '{plot_filename}' not found", border=0, ln=1, align='L')
             except Exception as e:
-                # If image cannot be added, add a note about it
-                pdf.cell(0, 10, f"Could not include image: {str(e)}", ln=True)
-                pdf.ln(10)
+                # If image cannot be added for any other reason, add a note about it
+                pdf.set_font('Times', 'I', 10)
+                pdf.cell(0, 10, f"Could not include image: {str(e)}", border=0, ln=1, align='L')
+            
+            pdf.ln(15)
     
     # Save the PDF
     pdf.output(report_filename)

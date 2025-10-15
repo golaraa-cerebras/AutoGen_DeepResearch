@@ -83,13 +83,14 @@ def plot_data(
 def generate_pdf_report_tool(
     analyst_response: Annotated[str, "The response from the analyst agent"],
     plot_filenames: Annotated[List[str], "List of filenames of plots to include in the report"] = [],
-    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf"
+    report_filename: Annotated[str, "Filename for the generated PDF report"] = "report.pdf",
+    report_title: Annotated[str, "Title for the PDF report"] = "Analysis Report"
 ) -> str:
     """
     Function that generates a PDF report with the analyst's response and any generated plots.
     Returns the filename of the generated PDF report.
     """
-    return generate_pdf_report(analyst_response, plot_filenames, report_filename)
+    return generate_pdf_report(analyst_response, plot_filenames, report_filename, report_title)
 
 
 async def main():
@@ -129,29 +130,6 @@ async def main():
             ]
         )
     
-    # # Get the analyst's response
-    # analyst_response = res[1].summary if len(res) > 1 else "No analysis available"
-    
-    # # Now initiate the visualization and report generation with the analyst's response
-    # res2 = await orchestrator_agent.a_initiate_chats(  
-    #         [
-    #             {
-    #                 "chat_id": 3,
-    #                 "recipient": data_analyst_agent,
-    #                 "message": f"Based on the following analysis from the analyst agent, if needed, create visualization(s) and save them as png files. Then write a report using the following analysis and include any available plots when appropriate:\n\nAnalysis:\n{analyst_response}",
-    #                 "silent": False,
-    #                 "summary_method": "last_msg",
-    #             },
-    #             # {
-    #             #     "chat_id": 4,
-    #             #     "prerequisites": [3],
-    #             #     "recipient": data_analyst_agent,
-    #             #     "message": f"Based on the analysis provided by the analyst agent and the market share visualization you created, generate a comprehensive PDF report and save it as 'battery_recycling_analysis.pdf'.\n\nAnalysis:\n{analyst_response}",
-    #             #     "silent": False,
-    #             #     "summary_method": "last_msg",
-    #             # },
-    #         ]
-    #     )
 
 if __name__ == "__main__":
     asyncio.run(main())
